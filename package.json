@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "nodemon server/server.js"
+    "dev": "nodemon server/server.js",
+    "postinstall": "npm rebuild --build-from-source better-sqlite3"
   },
   "keywords": [],
   "author": "",
@@ -21,3 +22,4 @@
     "nodemon": "^3.1.11"
   }
 }
+
