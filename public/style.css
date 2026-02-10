@@ -25,6 +25,8 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     min-width: 350px;
     max-width: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 .login-screen h1 {
@@ -60,10 +62,12 @@ body {
 }
 
 /* Form styles */
+
 .form {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
 }
 
 .form.hidden {
