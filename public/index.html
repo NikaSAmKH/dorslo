@@ -10,18 +10,48 @@
     <div class="container">
         <div class="login-screen" id="loginScreen">
             <h1>Dorslo</h1>
-            <input type="text" id="usernameInput" placeholder="">
-            <button id="loginBtn">Join</button>
+            
+            <!-- Tabs to switch between signup/login/guest -->
+            <div class="tabs">
+                <button class="tab-btn active" id="signupTab">Sign Up</button>
+                <button class="tab-btn" id="loginTab">Login</button>
+                <button class="tab-btn" id="guestTab">Guest</button>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div class="form" id="signupForm">
+                <input type="text" id="signupUsername" placeholder="">
+                <input type="password" id="signupPassword" placeholder="">
+                <button id="signupBtn">Create Account</button>
+                <p class="error-msg" id="signupError"></p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="form hidden" id="loginForm">
+                <input type="text" id="loginUsername" placeholder="">
+                <input type="password" id="loginPassword" placeholder="">
+                <button id="loginBtn">Login</button>
+                <p class="error-msg" id="loginError"></p>
+            </div>
+
+            <!-- Guest Form -->
+            <div class="form hidden" id="guestForm">
+                <input type="text" id="guestUsername" placeholder="">
+                <button id="guestBtn">Join as Guest</button>
+            </div>
         </div>
 
         <div class="chat-screen" id="chatScreen" style="display: none;">
             <div class="header">
-                <h2>kitriUS</h2>
-                <span id="currentUser"></span>
+                <h2>kitri_US</h2>
+                <div class="user-info">
+                    <span id="currentUser"></span>
+                    <button id="logoutBtn">Logout</button>
+                </div>
             </div>
             <div class="messages" id="messages"></div>
             <div class="input-area">
-                <input type="text" id="messageInput" placeholder="...">
+                <input type="text" id="messageInput" placeholder="">
                 <button id="sendBtn">Send</button>
             </div>
         </div>
