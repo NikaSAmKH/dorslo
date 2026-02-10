@@ -19,7 +19,7 @@ loginBtn.addEventListener('click', () => {
         socket.emit('register', username);
         loginScreen.style.display = 'none';
         chatScreen.style.display = 'flex';
-        currentUser.textContent = `Logged in as: ${username}`;
+        currentUser.textContent = `${username}`;
     }
 });
 
