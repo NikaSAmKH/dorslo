@@ -153,6 +153,10 @@ function enterChat() {
     loginScreen.style.display = 'none';
     chatScreen.style.display = 'flex';
     currentUser.textContent = `${username} ${accountType === 'guest' ? '(Guest)' : ''}`;
+    
+    // Set avatar and username display
+    document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+    document.getElementById('usernameDisplay').textContent = username;
 }
 
 // Logout
@@ -212,10 +216,18 @@ function sendMessage() {
 socket.on('message', (data) => {
     const messageEl = document.createElement('div');
     messageEl.className = 'message';
+    
+    const firstLetter = data.username.charAt(0).toUpperCase();
+    
     messageEl.innerHTML = `
-        <span class="message-author">${data.username}</span>
-        <span class="message-time">${data.timestamp}</span>
-        <div>${data.text}</div>
+        <div class="message-avatar">${firstLetter}</div>
+        <div class="message-content">
+            <div class="message-header">
+                <span class="message-author">${data.username}</span>
+                <span class="message-time">${data.timestamp}</span>
+            </div>
+            <div class="message-text">${data.text}</div>
+        </div>
     `;
     messagesDiv.appendChild(messageEl);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;

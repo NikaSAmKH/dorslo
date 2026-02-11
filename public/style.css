@@ -439,7 +439,8 @@ body {
 }
 
 .message {
-  padding: 8px 0;
+  padding: 12px 0;
+  margin-top: 16px;
   display: flex;
   gap: 16px;
   transition: background-color 0.1s;
