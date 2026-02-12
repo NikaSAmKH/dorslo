@@ -63,6 +63,49 @@ io.on('connection', (socket) => {
     users.delete(socket.id);
     console.log(`${username} disconnected`);
   });
+
+  // Voice chat handlers
+  socket.on('join-voice', (data) => {
+    socket.join('voice-general');
+    users.set(socket.id, data.username);
+    
+    // Get all users in voice channel
+    const room = io.sockets.adapter.rooms.get('voice-general');
+    const usersInVoice = room ? Array.from(room) : [];
+    
+    // Notify everyone in voice channel
+    io.to('voice-general').emit('user-joined-voice', {
+      userId: socket.id,
+      username: data.username,
+      usersInVoice: usersInVoice.map(id => ({
+        id,
+        username: users.get(id)
+      }))
+    });
+    
+    console.log(`${data.username} joined voice channel`);
+  });
+
+  socket.on('leave-voice', () => {
+    const username = users.get(socket.id);
+    socket.leave('voice-general');
+    
+    io.to('voice-general').emit('user-left-voice', {
+      userId: socket.id,
+      username: username
+    });
+    
+    console.log(`${username} left voice channel`);
+  });
+
+  // WebRTC signaling
+  socket.on('signal', (data) => {
+    io.to(data.to).emit('signal', {
+      signal: data.signal,
+      from: socket.id,
+      username: users.get(socket.id)
+    });
+  });
 });
 
 const PORT = 3000;

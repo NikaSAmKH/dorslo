@@ -40,6 +40,15 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 
+// Image elements
+const imageInput = document.getElementById('imageInput');
+const imageBtn = document.getElementById('imageBtn');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+const removePreview = document.getElementById('removePreview');
+
+let pendingImage = null;
+
 // Tab switching
 signupTab.addEventListener('click', () => {
     setActiveTab('signup');
@@ -202,7 +211,21 @@ messageInput.addEventListener('keypress', (e) => {
 
 function sendMessage() {
     const message = messageInput.value.trim();
-    if (message) {
+    
+    if (pendingImage) {
+        // Send image with optional text
+        socket.emit('message', {
+            username: username,
+            text: message,
+            image: pendingImage,
+            timestamp: new Date().toLocaleTimeString()
+        });
+        messageInput.value = '';
+        pendingImage = null;
+        imagePreview.style.display = 'none';
+        previewImg.src = '';
+    } else if (message) {
+        // Send text only
         socket.emit('message', {
             username: username,
             text: message,
@@ -211,10 +234,40 @@ function sendMessage() {
         messageInput.value = '';
     }
 }
-// Image upload
-const imageInput = document.getElementById('imageInput');
-const imageBtn = document.getElementById('imageBtn');
 
+// Receive messages
+socket.on('message', (data) => {
+    const messageEl = document.createElement('div');
+    messageEl.className = 'message';
+    
+    const firstLetter = data.username.charAt(0).toUpperCase();
+    
+    let content = '';
+    if (data.text) {
+        content += `<div class="message-text">${data.text}</div>`;
+    }
+    if (data.image) {
+        content += `<img src="${data.image}" class="message-image" alt="Shared image">`;
+    }
+    
+    messageEl.innerHTML = `
+        <div class="message-avatar">${firstLetter}</div>
+        <div class="message-content">
+            <div class="message-header">
+                <span class="message-author">${data.username}</span>
+                <span class="message-time">${data.timestamp}</span>
+            </div>
+            ${content}
+        </div>
+    `;
+    messagesDiv.appendChild(messageEl);
+    
+    // Scroll to bottom
+    const wrapper = document.querySelector('.messages-wrapper');
+    wrapper.scrollTop = wrapper.scrollHeight;
+});
+
+// Image upload
 imageBtn.addEventListener('click', () => {
     imageInput.click();
 });
@@ -222,18 +275,27 @@ imageBtn.addEventListener('click', () => {
 imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            socket.emit('message', {
-                username: username,
-                text: '',
-                image: event.target.result,
-                timestamp: new Date().toLocaleTimeString()
-            });
-        };
-        reader.readAsDataURL(file);
-        imageInput.value = ''; // Reset input
+        showImagePreview(file);
+        imageInput.value = '';
     }
+});
+
+// Show image preview
+function showImagePreview(file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        pendingImage = event.target.result;
+        previewImg.src = pendingImage;
+        imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+// Remove preview
+removePreview.addEventListener('click', () => {
+    pendingImage = null;
+    imagePreview.style.display = 'none';
+    previewImg.src = '';
 });
 
 // Drag and drop
@@ -254,45 +316,10 @@ messagesWrapper.addEventListener('drop', (e) => {
     
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            socket.emit('message', {
-                username: username,
-                text: '',
-                image: event.target.result,
-                timestamp: new Date().toLocaleTimeString()
-            });
-        };
-        reader.readAsDataURL(file);
+        showImagePreview(file);
     }
 });
-// Receive messages
-socket.on('message', (data) => {
-    const messageEl = document.createElement('div');
-    messageEl.className = 'message';
-    
-    const firstLetter = data.username.charAt(0).toUpperCase();
-    
-    let content = '';
-    if (data.image) {
-        content = `<img src="${data.image}" class="message-image" alt="Shared image">`;
-    } else {
-        content = `<div class="message-text">${data.text}</div>`;
-    }
-    
-    messageEl.innerHTML = `
-        <div class="message-avatar">${firstLetter}</div>
-        <div class="message-content">
-            <div class="message-header">
-                <span class="message-author">${data.username}</span>
-                <span class="message-time">${data.timestamp}</span>
-            </div>
-            ${content}
-        </div>
-    `;
-    messagesDiv.appendChild(messageEl);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-});
+
 // Paste images
 document.addEventListener('paste', (e) => {
     const items = e.clipboardData.items;
@@ -300,20 +327,209 @@ document.addEventListener('paste', (e) => {
     for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf('image') !== -1) {
             const file = items[i].getAsFile();
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-                socket.emit('message', {
-                    username: username,
-                    text: '',
-                    image: event.target.result,
-                    timestamp: new Date().toLocaleTimeString()
-                });
-            };
-            
-            reader.readAsDataURL(file);
-            e.preventDefault(); // Prevent default paste behavior
+            showImagePreview(file);
+            e.preventDefault();
             break;
         }
     }
 });
+
+// ============================================
+// VOICE CHAT
+// ============================================
+
+const voiceChannel = document.getElementById('voiceChannel');
+const voiceUsers = document.getElementById('voiceUsers');
+const voiceControls = document.getElementById('voiceControls');
+const muteBtn = document.getElementById('muteBtn');
+const disconnectBtn = document.getElementById('disconnectBtn');
+
+let inVoiceChannel = false;
+let localStream = null;
+let peers = {}; // Store peer connections
+let muted = false;
+
+// Join voice channel
+voiceChannel.addEventListener('click', () => {
+    if (!inVoiceChannel) {
+        joinVoiceChannel();
+    }
+});
+
+async function joinVoiceChannel() {
+    try {
+        // Get microphone access
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        
+        inVoiceChannel = true;
+        voiceControls.style.display = 'block';
+        voiceChannel.classList.add('connected');
+        
+        // Tell server we joined
+        socket.emit('join-voice', { username: username });
+        
+        console.log('Joined voice channel');
+    } catch (error) {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please check permissions.');
+    }
+}
+
+// Leave voice channel
+disconnectBtn.addEventListener('click', () => {
+    leaveVoiceChannel();
+});
+
+function leaveVoiceChannel() {
+    // Stop local stream
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    // Close all peer connections
+    Object.values(peers).forEach(peer => {
+        if (peer) peer.destroy();
+    });
+    peers = {};
+    
+    inVoiceChannel = false;
+    voiceControls.style.display = 'none';
+    voiceChannel.classList.remove('connected');
+    voiceUsers.innerHTML = '';
+    
+    socket.emit('leave-voice');
+    console.log('Left voice channel');
+}
+
+// Mute/unmute
+muteBtn.addEventListener('click', () => {
+    if (localStream) {
+        muted = !muted;
+        localStream.getAudioTracks()[0].enabled = !muted;
+        
+        if (muted) {
+            muteBtn.classList.add('muted');
+            muteBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                    <path d="M12 18.92V22"/>
+                    <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            `;
+        } else {
+            muteBtn.classList.remove('muted');
+            muteBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                    <path d="M12 18.92V22"/>
+                </svg>
+            `;
+        }
+    }
+});
+
+// When someone joins voice
+socket.on('user-joined-voice', (data) => {
+    console.log('User joined voice:', data.username);
+    
+    // Update user list
+    updateVoiceUserList(data.usersInVoice);
+    
+    // If this is not us and we're in voice, create peer connection
+    if (data.userId !== socket.id && inVoiceChannel) {
+        createPeerConnection(data.userId, true);
+    }
+});
+
+// When someone leaves voice
+socket.on('user-left-voice', (data) => {
+    console.log('User left voice:', data.username);
+    
+    // Remove user from list
+    const userEl = document.getElementById(`voice-user-${data.userId}`);
+    if (userEl) userEl.remove();
+    
+    // Close peer connection
+    if (peers[data.userId]) {
+        peers[data.userId].destroy();
+        delete peers[data.userId];
+    }
+});
+
+// WebRTC signaling
+socket.on('signal', (data) => {
+    if (!peers[data.from]) {
+        createPeerConnection(data.from, false);
+    }
+    
+    peers[data.from].signal(data.signal);
+});
+
+// Create peer connection
+function createPeerConnection(userId, initiator) {
+    // Load simple-peer from CDN
+    if (!window.SimplePeer) {
+        console.error('SimplePeer not loaded');
+        return;
+    }
+    
+    const peer = new SimplePeer({
+        initiator: initiator,
+        stream: localStream,
+        trickle: false
+    });
+    
+    peer.on('signal', (signal) => {
+        socket.emit('signal', {
+            signal: signal,
+            to: userId
+        });
+    });
+    
+    peer.on('stream', (remoteStream) => {
+        console.log('Receiving remote stream');
+        playAudio(remoteStream, userId);
+    });
+    
+    peer.on('error', (err) => {
+        console.error('Peer error:', err);
+    });
+    
+    peers[userId] = peer;
+}
+
+// Play remote audio
+function playAudio(stream, userId) {
+    let audio = document.getElementById(`audio-${userId}`);
+    if (!audio) {
+        audio = document.createElement('audio');
+        audio.id = `audio-${userId}`;
+        audio.autoplay = true;
+        document.body.appendChild(audio);
+    }
+    audio.srcObject = stream;
+}
+
+// Update voice user list
+function updateVoiceUserList(users) {
+    voiceUsers.innerHTML = '';
+    
+    users.forEach(user => {
+        const userEl = document.createElement('div');
+        userEl.className = 'voice-user';
+        userEl.id = `voice-user-${user.id}`;
+        
+        const initial = user.username ? user.username.charAt(0).toUpperCase() : 'U';
+        
+        userEl.innerHTML = `
+            <div class="voice-user-avatar">${initial}</div>
+            <span class="voice-user-name">${user.username || 'User'}</span>
+            <div class="voice-speaking-indicator"></div>
+        `;
+        
+        voiceUsers.appendChild(userEl);
+    });
+}

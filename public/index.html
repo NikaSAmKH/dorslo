@@ -61,6 +61,40 @@
                     <span class="channel-icon">#</span>
                     <span class="channel-name">general</span>
                 </div>
+                
+                <div class="channel-category">VOICE CHANNELS</div>
+                <div class="voice-channel" id="voiceChannel">
+                    <div class="voice-channel-header">
+                        <span class="channel-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                            </svg>
+                        </span>
+                        <span class="channel-name">General</span>
+                    </div>
+                    <div class="voice-users" id="voiceUsers"></div>
+                </div>
+                
+                <div class="voice-controls" id="voiceControls" style="display: none;">
+                    <div class="voice-status">
+                        <span class="voice-status-text">Voice Connected</span>
+                    </div>
+                    <div class="voice-buttons">
+                        <button class="voice-btn" id="muteBtn" title="Mute">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                                <path d="M12 18.92V22"/>
+                            </svg>
+                        </button>
+                        <button class="voice-btn disconnect" id="disconnectBtn" title="Disconnect">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 1L1 23M17 5l-5 5M12 12l-5 5"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="user-panel">
@@ -103,6 +137,14 @@
             </div>
 
            <div class="message-input-container">
+                <!-- Image Preview (add this) -->
+                <div class="image-preview" id="imagePreview" style="display: none;">
+                    <div class="preview-content">
+                        <img id="previewImg" src="" alt="Preview">
+                        <button class="preview-remove" id="removePreview">×</button>
+                    </div>
+                </div>
+                
                 <div class="message-input-wrapper">
                     <input type="file" id="imageInput" accept="image/*" style="display: none;">
                     <button class="input-icon-btn" id="imageBtn">
@@ -120,7 +162,9 @@
             </div>
         </div>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="client.js"></script>
 </body>

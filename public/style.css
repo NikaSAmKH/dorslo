@@ -500,7 +500,7 @@ body {
 
 /* Message Input */
 .message-input-container {
-  padding: 0 16px 24px 16px;
+  padding: 0 0 24px 0;
 }
 
 .message-input-wrapper {
@@ -510,6 +510,7 @@ body {
   align-items: center;
   padding: 0 16px;
   gap: 8px;
+  margin: 0 16px;
 }
 
 .input-icon-btn {
@@ -572,4 +573,49 @@ body {
 
 .message-image:hover {
   transform: scale(1.02);
+}
+
+.image-preview {
+  padding: 8px;
+  background-color: var(--discord-input);
+  border-radius: 8px 8px 0 0;
+  margin: 0 16px;
+}
+
+.preview-content {
+  position: relative;
+  display: inline-block;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.preview-content img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 4px;
+  display: block;
+}
+
+.preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(237, 66, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.preview-remove:hover {
+  background-color: #ed4245;
 }
