@@ -4,6 +4,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const { createUser, checkLogin } = require('./database');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
 const app = express();
 const server = http.createServer(app);

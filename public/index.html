@@ -102,12 +102,12 @@
                 <div class="messages" id="messages"></div>
             </div>
 
-            <div class="message-input-container">
+           <div class="message-input-container">
                 <div class="message-input-wrapper">
-                    <button class="input-icon-btn">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    <button class="input-icon-btn" id="imageBtn">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 8v8M8 12h8" stroke="white" stroke-width="2"/>
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/>
                         </svg>
                     </button>
                     <input type="text" id="messageInput" placeholder="Message #general">

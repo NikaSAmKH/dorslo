@@ -561,3 +561,15 @@ body {
   background-color: var(--discord-primary);
   color: white;
 }
+.message-image {
+  max-width: 400px;
+  max-height: 300px;
+  border-radius: 8px;
+  margin-top: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.message-image:hover {
+  transform: scale(1.02);
+}

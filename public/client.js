@@ -211,13 +211,74 @@ function sendMessage() {
         messageInput.value = '';
     }
 }
+// Image upload
+const imageInput = document.getElementById('imageInput');
+const imageBtn = document.getElementById('imageBtn');
 
+imageBtn.addEventListener('click', () => {
+    imageInput.click();
+});
+
+imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            socket.emit('message', {
+                username: username,
+                text: '',
+                image: event.target.result,
+                timestamp: new Date().toLocaleTimeString()
+            });
+        };
+        reader.readAsDataURL(file);
+        imageInput.value = ''; // Reset input
+    }
+});
+
+// Drag and drop
+const messagesWrapper = document.querySelector('.messages-wrapper');
+
+messagesWrapper.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    messagesWrapper.style.backgroundColor = 'rgba(88, 101, 242, 0.1)';
+});
+
+messagesWrapper.addEventListener('dragleave', () => {
+    messagesWrapper.style.backgroundColor = '';
+});
+
+messagesWrapper.addEventListener('drop', (e) => {
+    e.preventDefault();
+    messagesWrapper.style.backgroundColor = '';
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            socket.emit('message', {
+                username: username,
+                text: '',
+                image: event.target.result,
+                timestamp: new Date().toLocaleTimeString()
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
 // Receive messages
 socket.on('message', (data) => {
     const messageEl = document.createElement('div');
     messageEl.className = 'message';
     
     const firstLetter = data.username.charAt(0).toUpperCase();
+    
+    let content = '';
+    if (data.image) {
+        content = `<img src="${data.image}" class="message-image" alt="Shared image">`;
+    } else {
+        content = `<div class="message-text">${data.text}</div>`;
+    }
     
     messageEl.innerHTML = `
         <div class="message-avatar">${firstLetter}</div>
@@ -226,9 +287,33 @@ socket.on('message', (data) => {
                 <span class="message-author">${data.username}</span>
                 <span class="message-time">${data.timestamp}</span>
             </div>
-            <div class="message-text">${data.text}</div>
+            ${content}
         </div>
     `;
     messagesDiv.appendChild(messageEl);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+// Paste images
+document.addEventListener('paste', (e) => {
+    const items = e.clipboardData.items;
+    
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                socket.emit('message', {
+                    username: username,
+                    text: '',
+                    image: event.target.result,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+            };
+            
+            reader.readAsDataURL(file);
+            e.preventDefault(); // Prevent default paste behavior
+            break;
+        }
+    }
 });
